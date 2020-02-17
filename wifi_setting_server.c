@@ -5,7 +5,7 @@
 #include "wifi_setting_server.h"
 
 #define urlcmp(destination, source) strncmp(destination, source, strlen(source))
-#define res_send_chunk(req, message) \
+#define res_send_chunk(req, message)                                           \
   httpd_resp_send_chunk(req, message, strlen(message))
 
 #define SOFT_AP_IP_ADDRESS_1 192
@@ -29,7 +29,7 @@
 #define DEFAULT_AP_SSID "ESP32 SoftAP"
 
 static char ap_ssid[32] = DEFAULT_AP_SSID;
-const static char* TAG = "wifi setting server";
+const static char *TAG = "wifi setting server";
 
 httpd_handle_t server_handler = NULL;
 const int WIFI_CONNECTED_BIT = BIT0;
@@ -37,47 +37,47 @@ EventGroupHandle_t wifi_event_group;
 
 void start_server(void);
 void stop_server(void);
-static esp_err_t wifi_event_handler(void* user_parameter,
-                                    system_event_t* event) {
+static esp_err_t wifi_event_handler(void *user_parameter,
+                                    system_event_t *event) {
   switch (event->event_id) {
-    case SYSTEM_EVENT_STA_START:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-      esp_wifi_connect();
-      start_server();
-      break;
-    case SYSTEM_EVENT_STA_CONNECTED:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_STA_CONNECTED");
-      break;
-    case SYSTEM_EVENT_STA_GOT_IP:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP Got IP: %s\n",
-               ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
-      xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
-      stop_server();
-      break;
-    case SYSTEM_EVENT_STA_DISCONNECTED:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-      xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
-      esp_wifi_connect();
-      start_server();
-      break;
-    case SYSTEM_EVENT_STA_LOST_IP:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_STA_LOST_IP");
-      break;
-    case SYSTEM_EVENT_AP_STACONNECTED:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_AP_STACONNECTED");
-      esp_wifi_disconnect();
-      break;
-    case SYSTEM_EVENT_AP_STADISCONNECTED:
-      ESP_LOGI(TAG, "SYSTEM_EVENT_AP_STADISCONNECTED");
-      esp_wifi_connect();
-      break;
-    default:
-      break;
+  case SYSTEM_EVENT_STA_START:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
+    esp_wifi_connect();
+    start_server();
+    break;
+  case SYSTEM_EVENT_STA_CONNECTED:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_STA_CONNECTED");
+    break;
+  case SYSTEM_EVENT_STA_GOT_IP:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP Got IP: %s\n",
+             ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+    xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    stop_server();
+    break;
+  case SYSTEM_EVENT_STA_DISCONNECTED:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
+    xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    esp_wifi_connect();
+    start_server();
+    break;
+  case SYSTEM_EVENT_STA_LOST_IP:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_STA_LOST_IP");
+    break;
+  case SYSTEM_EVENT_AP_STACONNECTED:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_AP_STACONNECTED");
+    esp_wifi_disconnect();
+    break;
+  case SYSTEM_EVENT_AP_STADISCONNECTED:
+    ESP_LOGI(TAG, "SYSTEM_EVENT_AP_STADISCONNECTED");
+    esp_wifi_connect();
+    break;
+  default:
+    break;
   }
   return ESP_OK;
 }
 
-esp_err_t index_get_handler(httpd_req_t* req) {
+esp_err_t index_get_handler(httpd_req_t *req) {
   esp_wifi_disconnect();
   esp_wifi_scan_stop();
 
@@ -138,20 +138,19 @@ esp_err_t index_get_handler(httpd_req_t* req) {
   esp_wifi_scan_start(&scan_config, true);
   uint16_t number = 0;
   esp_wifi_scan_get_ap_num(&number);
-  wifi_ap_record_t* ap_info =
-      (wifi_ap_record_t*)malloc(sizeof(wifi_ap_record_t) * number);
+  wifi_ap_record_t *ap_info =
+      (wifi_ap_record_t *)malloc(sizeof(wifi_ap_record_t) * number);
   ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
   for (int i = 0; (i < number); i++) {
     ESP_LOGI(TAG, "SSID \t\t%s", ap_info[i].ssid);
     res_send_chunk(req, "<option>");
-    res_send_chunk(req, (char*)ap_info[i].ssid);
+    res_send_chunk(req, (char *)ap_info[i].ssid);
     res_send_chunk(req, "</option>");
   }
   free(ap_info);
-  res_send_chunk(req,
-                 "<input name='password' type='text' length='64' "
-                 "onkeyup='inputKeyUp(event)' placeholder='Password' "
-                 "autocomplete='off'>");
+  res_send_chunk(req, "<input name='password' type='text' length='64' "
+                      "onkeyup='inputKeyUp(event)' placeholder='Password' "
+                      "autocomplete='off'>");
   res_send_chunk(req, "</div><div class='button-container'>");
   res_send_chunk(
       req, "<button type='submit' onclick='return checkSSID()'>Save</button>");
@@ -163,54 +162,54 @@ esp_err_t index_get_handler(httpd_req_t* req) {
 /* Handler to respond with an icon file embedded in flash.
  * Browsers expect to GET website icon at URI /favicon.ico.
  * This can be overridden by uploading file with same name */
-esp_err_t favicon_get_handler(httpd_req_t* req) {
+esp_err_t favicon_get_handler(httpd_req_t *req) {
   extern const unsigned char favicon_ico_start[] asm(
       "_binary_favicon_ico_start");
   extern const unsigned char favicon_ico_end[] asm("_binary_favicon_ico_end");
   const size_t favicon_ico_size = (favicon_ico_end - favicon_ico_start);
   httpd_resp_set_type(req, "image/x-icon");
-  httpd_resp_send(req, (const char*)favicon_ico_start, favicon_ico_size);
+  httpd_resp_send(req, (const char *)favicon_ico_start, favicon_ico_size);
   return ESP_OK;
 }
-esp_err_t jquery_get_handler(httpd_req_t* req) {
+esp_err_t jquery_get_handler(httpd_req_t *req) {
   extern const unsigned char jquery_js_start[] asm(
       "_binary_jquery_min_js_start");
   extern const unsigned char jquery_js_end[] asm("_binary_jquery_min_js_end");
   const size_t jquery_js_size = (jquery_js_end - jquery_js_start);
   httpd_resp_set_type(req, "text/javascript");
-  httpd_resp_send(req, (const char*)jquery_js_start, jquery_js_size);
+  httpd_resp_send(req, (const char *)jquery_js_start, jquery_js_size);
   return ESP_OK;
 }
 
-esp_err_t style_get_handler(httpd_req_t* req) {
+esp_err_t style_get_handler(httpd_req_t *req) {
   extern const unsigned char style_css_start[] asm("_binary_style_css_start");
   extern const unsigned char style_css_end[] asm("_binary_style_css_end");
   const size_t style_css_size = (style_css_end - style_css_start);
   httpd_resp_set_type(req, "text/css");
-  httpd_resp_send(req, (const char*)style_css_start, style_css_size);
+  httpd_resp_send(req, (const char *)style_css_start, style_css_size);
   return ESP_OK;
 }
 
-esp_err_t refresh_get_handler(httpd_req_t* req) {
+esp_err_t refresh_get_handler(httpd_req_t *req) {
   extern const unsigned char refresh_png_start[] asm(
       "_binary_refresh_png_start");
   extern const unsigned char refresh_png_end[] asm("_binary_refresh_png_end");
   const size_t refresh_png_size = (refresh_png_end - refresh_png_start);
   httpd_resp_set_type(req, "image/png");
-  httpd_resp_send(req, (const char*)refresh_png_start, refresh_png_size);
+  httpd_resp_send(req, (const char *)refresh_png_start, refresh_png_size);
   return ESP_OK;
 }
-esp_err_t save_get_handler(httpd_req_t* req) {
+esp_err_t save_get_handler(httpd_req_t *req) {
   extern const unsigned char save_html_start[] asm("_binary_save_html_start");
   extern const unsigned char save_html_end[] asm("_binary_save_html_end");
   const size_t save_html_size = (save_html_end - save_html_start);
   httpd_resp_set_type(req, "text/html");
-  httpd_resp_send(req, (const char*)save_html_start, save_html_size);
+  httpd_resp_send(req, (const char *)save_html_start, save_html_size);
   return ESP_OK;
 }
-esp_err_t save_post_handler(httpd_req_t* req) {
+esp_err_t save_post_handler(httpd_req_t *req) {
   size_t content_size = req->content_len;
-  char* body = (char*)malloc(sizeof(char) * (content_size + 1));
+  char *body = (char *)malloc(sizeof(char) * (content_size + 1));
   memset(body, 0, content_size + 1);
   int ret = httpd_req_recv(req, body, content_size);
   if (ret < 0) {
@@ -218,17 +217,17 @@ esp_err_t save_post_handler(httpd_req_t* req) {
     return ESP_FAIL;
   }
   printf("body: %s \n", body);
-  JSON_Value* root_value = json_parse_string(body);
-  JSON_Object* root_object = json_value_get_object(root_value);
-  char* ssid = (char*)json_object_get_string(root_object, "ssid");
-  char* password = (char*)json_object_get_string(root_object, "password");
+  JSON_Value *root_value = json_parse_string(body);
+  JSON_Object *root_object = json_value_get_object(root_value);
+  char *ssid = (char *)json_object_get_string(root_object, "ssid");
+  char *password = (char *)json_object_get_string(root_object, "password");
   printf("ssid %s\n", ssid);
   printf("pw %s\n", password);
-  wifi_config_t wifi_config;
+  wifi_config_t wifi_config = {};
   memset(wifi_config.sta.ssid, 0, sizeof(wifi_config.sta.ssid));
   memset(wifi_config.sta.password, 0, sizeof(wifi_config.sta.password));
-  strncpy((char*)wifi_config.sta.ssid, ssid, strlen(ssid));
-  strncpy((char*)wifi_config.sta.password, password, strlen(password));
+  strncpy((char *)wifi_config.sta.ssid, ssid, strlen(ssid));
+  strncpy((char *)wifi_config.sta.password, password, strlen(password));
   ESP_LOGI("WIFI", "Setting WiFi configuration SSID %s...",
            wifi_config.sta.ssid);
   ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
@@ -238,7 +237,7 @@ esp_err_t save_post_handler(httpd_req_t* req) {
   return ESP_OK;
 }
 
-static esp_err_t get_handlers(httpd_req_t* req) {
+static esp_err_t get_handlers(httpd_req_t *req) {
   if (urlcmp(req->uri, "/favicon.ico") == 0) {
     return favicon_get_handler(req);
   }
@@ -256,12 +255,13 @@ static esp_err_t get_handlers(httpd_req_t* req) {
   };
   httpd_resp_set_status(req, "307 Temporary Redirect");
   httpd_resp_set_hdr(req, "Location", "/");
-  httpd_resp_send(req, NULL, 0);  // Response body can be empty
+  httpd_resp_send(req, NULL, 0); // Response body can be empty
   return ESP_OK;
 }
 
 void start_server(void) {
-  if (server_handler != NULL) return;
+  if (server_handler != NULL)
+    return;
   ESP_LOGI(TAG, "start http server");
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
   httpd_uri_t index_url = {
@@ -344,11 +344,11 @@ void start_wifi_setting_server() {
               .beacon_interval = 150,
           },
   };
-  strncpy((char*)ap_config.ap.ssid, ap_ssid, strlen(ap_ssid));
+  strncpy((char *)ap_config.ap.ssid, ap_ssid, strlen(ap_ssid));
   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
-  ESP_ERROR_CHECK(esp_wifi_set_protocol(
-      ESP_IF_WIFI_STA,
-      WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N));
+  ESP_ERROR_CHECK(esp_wifi_set_protocol(ESP_IF_WIFI_STA,
+                                        WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G |
+                                            WIFI_PROTOCOL_11N));
   ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_FLASH));
   ESP_ERROR_CHECK(esp_wifi_start());
 }
@@ -358,7 +358,7 @@ void wait_connect_wifi() {
                       portMAX_DELAY);
 }
 
-esp_err_t set_ap_ssid(char* ssid) {
+esp_err_t set_ap_ssid(char *ssid) {
   size_t length = strlen(ssid);
   if (length > 32) {
     ESP_LOGE(TAG, "ap ssid is too long.");
